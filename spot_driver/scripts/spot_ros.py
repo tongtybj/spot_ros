@@ -31,7 +31,11 @@ from spot_msgs.msg import Feedback
 from spot_msgs.msg import MobilityParams
 from spot_msgs.msg import NavigateToAction, NavigateToResult, NavigateToFeedback
 from spot_msgs.msg import TrajectoryAction, TrajectoryResult, TrajectoryFeedback
-from spot_msgs.srv import ListGraph, ListGraphResponse, SetLocomotion, SetLocomotionResponse
+from spot_msgs.srv import ListGraph, ListGraphResponse
+from spot_msgs.srv import UploadGraph, UploadGraphResponse
+from spot_msgs.srv import SetLocalizationFiducial, SetLocalizationFiducialResponse
+from spot_msgs.srv import SetLocalizationWaypoint, SetLocalizationWaypointResponse
+from spot_msgs.srv import SetLocomotion, SetLocomotionResponse
 
 from ros_helpers import *
 from spot_wrapper import SpotWrapper
@@ -372,10 +376,25 @@ class SpotROS():
         mobility_params.body_control.CopyFrom(body_control)
         self.spot_wrapper.set_mobility_params(mobility_params)
 
-    def handle_list_graph(self, upload_path):
+    def handle_list_graph(self, req):
         """ROS service handler for listing graph_nav waypoint_ids"""
-        resp = self.spot_wrapper.list_graph(upload_path)
+        resp = self.spot_wrapper.list_graph()
         return ListGraphResponse(resp)
+
+    def handle_upload_graph(self, req):
+        """"""
+        resp = self.spot_wrapper.upload_graph(req.upload_path)
+        return UploadGraphResponse(resp[0], resp[1])
+
+    def handle_set_localization_fiducial(self, req):
+        """"""
+        resp = self.spot_wrapper.set_localization_fiducial()
+        return SetLocalizationFiducialResponse(resp[0], resp[1])
+
+    def handle_set_localization_waypoint(self, req):
+        """"""
+        resp = self.spot_wrapper.set_localization_waypoint(req.waypoint_id)
+        return SetLocalizationWaypointResponse(resp[0], resp[1])
 
     def handle_navigate_to_feedback(self):
         """Thread function to send navigate_to feedback"""
@@ -504,7 +523,10 @@ class SpotROS():
             rospy.Service("stair_mode", SetBool, self.handle_stair_mode)
             rospy.Service("locomotion_mode", SetLocomotion, self.handle_locomotion_mode)
 
+            rospy.Service("upload_graph", UploadGraph, self.handle_upload_graph)
             rospy.Service("list_graph", ListGraph, self.handle_list_graph)
+            rospy.Service("set_localization_fiducial", SetLocalizationFiducial, self.handle_set_localization_fiducial)
+            rospy.Service("set_localization_waypoint", SetLocalizationWaypoint, self.handle_set_localization_waypoint)
 
             self.navigate_as = actionlib.SimpleActionServer('navigate_to', NavigateToAction,
                                                             execute_cb = self.handle_navigate_to,
