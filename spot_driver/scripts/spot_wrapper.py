@@ -414,8 +414,9 @@ class SpotWrapper():
                 self._estop_endpoint.settle_then_cut()
 
             return True, "Success"
-        except:
-            return False, "Error"
+        except Exception as e:
+            self._logger.error('Error: {}'.format(e))
+            return False, "Error: {}".format(e)
 
     def releaseEStop(self):
         """Stop eStop keepalive"""
@@ -497,8 +498,9 @@ class SpotWrapper():
         try:
             power.power_on(self._power_client)
             return True, "Success"
-        except:
-            return False, "Error"
+        except Exception as e:
+            self._logger.error('Error: {}'.format(e))
+            return False, "Error: {}".format(e)
 
     def set_mobility_params(self, mobility_params):
         """Set Params for mobility and movement
@@ -698,7 +700,7 @@ class SpotWrapper():
             data = graph_file.read()
             self._current_graph = map_pb2.Graph()
             self._current_graph.ParseFromString(data)
-            rospy.logdebug("Loaded graph has {} waypoints and {} edges".format(
+            self._logger.debug("Loaded graph has {} waypoints and {} edges".format(
                 len(self._current_graph.waypoints), len(self._current_graph.edges)))
         for waypoint in self._current_graph.waypoints:
             # Load the waypoint snapshots from disk.
@@ -739,7 +741,7 @@ class SpotWrapper():
         # Take the first argument as the destination waypoint.
         if len(args) < 1:
             # If no waypoint id is given as input, then return without requesting navigation.
-            print("No waypoint provided as a destination for navigate to.")
+            self._logger.error("No waypoint provided as a destination for navigate to.")
             return
 
         self._lease = self._lease_wallet.get_lease()
@@ -748,14 +750,16 @@ class SpotWrapper():
         if not destination_waypoint:
             # Failed to find the appropriate unique waypoint id for the navigation command.
             return
-        if not self.toggle_power(should_power_on=True):
-            print("Failed to power on the robot, and cannot complete navigate to request.")
-            return
+        else:
+            self._logger.info('navigate to {}'.format(destination_waypoint))
+        #if not self.toggle_power(should_power_on=True):
+        #    self._logger.error("Failed to power on the robot, and cannot complete navigate to request.")
+        #    return
 
         # Stop the lease keepalive and create a new sublease for graph nav.
-        self._lease = self._lease_wallet.advance()
-        sublease = self._lease.create_sublease()
-        self._lease_keepalive.shutdown()
+        #self._lease = self._lease_wallet.advance()
+        #sublease = self._lease.create_sublease()
+        #self._lease_keepalive.shutdown()
 
         # Navigate to the destination waypoint.
         is_finished = False
@@ -763,8 +767,9 @@ class SpotWrapper():
         while not is_finished:
             # Issue the navigation command about twice a second such that it is easy to terminate the
             # navigation command (with estop or killing the program).
-            nav_to_cmd_id = self._graph_nav_client.navigate_to(destination_waypoint, 1.0,
-                                                               leases=[sublease.lease_proto])
+            #nav_to_cmd_id = self._graph_nav_client.navigate_to(destination_waypoint, 1.0,
+            #                                                   leases=[sublease.lease_proto])
+            nav_to_cmd_id = self._graph_nav_client.navigate_to(destination_waypoint, 1.0)
             time.sleep(.5)  # Sleep for half a second to allow for command execution.
             # Poll the robot for feedback to determine if the navigation command is complete. Then sit
             # the robot down once it is finished.
@@ -794,7 +799,7 @@ class SpotWrapper():
         """Navigate through a specific route of waypoints."""
         if len(args) < 1:
             # If no waypoint ids are given as input, then return without requesting navigation.
-            print("No waypoints provided for navigate route.")
+            self._logger.error("No waypoints provided for navigate route.")
             return
         waypoint_ids = args[0]
         for i in range(len(waypoint_ids)):
