@@ -592,6 +592,7 @@ class SpotWrapper():
           upload_path : Path to the root directory of the map.
         """
         try:
+            self._clear_graph()
             self._upload_graph_and_snapshots(upload_path)
             return True, 'Success'
         except Exception as e:
@@ -616,7 +617,7 @@ class SpotWrapper():
         """ navigate with graph nav.
 
         Args:
-           navigate_to : Waypont id string for where to goal
+           id_navigate_to : Waypont id string for where to goal
         """
         # Boolean indicating the robot's power state.
         power_state = self._robot_state_client.get_robot_state().power_state
