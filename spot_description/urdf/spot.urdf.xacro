@@ -282,4 +282,21 @@
 
     <!-- Optional custom includes. -->
     <xacro:include filename="$(optenv SPOT_URDF_EXTRAS empty.urdf)" />
+
+    <!-- Foot -->
+    <xacro:macro name="foot_model" params="position">
+      <joint name="${position}_foot_j" type="fixed">
+        <origin xyz="0.0 0.0 -0.35" rpy="0 0 0" />
+        <axis xyz="0 1 0" />
+        <parent link="${position}_lower_leg" />
+        <child link="${position}_foot" />
+      </joint>
+      <link name="${position}_foot" />
+    </xacro:macro>
+    <xacro:foot_model position="front_left" />
+    <xacro:foot_model position="front_right" />
+    <xacro:foot_model position="rear_left" />
+    <xacro:foot_model position="rear_right" />
+
+
 </robot>
